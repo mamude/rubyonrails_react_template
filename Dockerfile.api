@@ -1,0 +1,42 @@
+FROM ruby:2.6.5-alpine
+
+ARG RAILS_ROOT=/var/www/api
+
+RUN apk add --update --no-cache \
+  binutils-gold \
+  build-base \
+  curl \
+  file \
+  g++ \
+  gcc \
+  less \
+  libstdc++ \
+  libffi-dev \
+  libc-dev \
+  linux-headers \
+  libgcrypt-dev \
+  make \
+  netcat-openbsd \
+  openssl \
+  pkgconfig \
+  postgresql-dev \
+  python \
+  tzdata \
+  zsh
+
+WORKDIR $RAILS_ROOT
+
+COPY ./server/api/Gemfile ./server/api/Gemfile.lock ./
+COPY ./server/api ./
+
+RUN gem install bundler
+RUN bundle check || bundle install
+
+# Rails setup
+COPY docker-rails-setup.sh /usr/bin
+RUN chmod +x /usr/bin/docker-rails-setup.sh
+
+# Rails entrypoint
+COPY docker-rails-api.sh /usr/bin
+RUN chmod +x /usr/bin/docker-rails-api.sh
+ENTRYPOINT [ "docker-rails-api.sh" ]
